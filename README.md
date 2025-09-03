@@ -138,31 +138,6 @@ This adds `app/llm_tools/tickets.rb` and registers a `create_ticket_v1` tool wit
 
 ## How it works
 
-```mermaid
-flowchart TD
-  U[User] -->|messages| O[Orchestrator]
-
-  subgraph Engine
-    R[Registry]:::b
-    V[Validators (JSON Schema)]:::b
-    I[Idempotency]:::b
-    A[OpenAI Adapter]:::b
-    S[(Store)]:::b
-  end
-
-  O --> R
-  O --> V
-  O --> A
-  O --> S
-  A --> O
-
-  O -->|validated args| H[(Your handlers)]
-  H -->|result| O
-  O -->|assistant text or tool result| U
-
-  classDef b fill:#eef,stroke:#99f,stroke-width:1px;
-```
-
 - **Orchestrator**: supplies tools to the model, loops until enough data is collected, then chooses exactly one tool to run.
 - **Registry**: your functions (name+version+schema+handler).
 - **Validators**: rejects bad inputs before your code runs.
