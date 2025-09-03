@@ -1,5 +1,4 @@
-# frozen_string_literal: true
-module LLM
+module Llm
   module Agent
     module Rails
       class Engine < ::Rails::Engine
