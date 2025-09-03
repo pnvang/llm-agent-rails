@@ -1,0 +1,38 @@
+# Bundler
+/.bundle/
+/vendor/bundle
+
+# Gems
+*.gem
+/pkg/
+
+# Logs & temp
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+
+# Byebug / Pry
+.byebug_history
+.pry_history
+
+# Editor / OS files
+*.swp
+*.swo
+*~
+.DS_Store
+.idea/
+.vscode/
+
+# Coverage / test artifacts
+/coverage/
+/spec/examples.txt
+
+# Rails engine generated files
+/config/database.yml
+/config/master.key
+/config/credentials.yml.enc
+
+# Node / Yarn (if you add JS frontend)
+/node_modules/
+/yarn-error.log
