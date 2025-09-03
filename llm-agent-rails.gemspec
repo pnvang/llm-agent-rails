@@ -20,6 +20,6 @@ Gem::Specification.new do |s|
 
   s.metadata = {
     "allowed_push_host" => "https://rubygems.org",
-    "source_code_uri" => "https://github.com/yourname/llm-agent-rails"
+    "source_code_uri" => "https://github.com/pnvang/llm-agent-rails"
   }
 end
