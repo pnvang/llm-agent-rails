@@ -7,7 +7,7 @@ Mount an endpoint, register tools (JSON Schema + handler), and let an Llm collec
 
 Add to your Gemfile:
 ```ruby
-gem "llm-agent-rails", github: "yourname/llm-agent-rails" # until published
+gem "llm-agent-rails", "~> 0.1"
 ```
 
 Bundle:
