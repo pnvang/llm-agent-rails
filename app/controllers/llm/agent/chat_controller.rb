@@ -5,9 +5,29 @@ module Llm
       protect_from_forgery with: :null_session
 
       def step
-        messages  = params.require(:messages)
-        thread_id = params[:thread_id] || "http-#{request.request_id}"
+        raw = params[:messages]
+        if raw.nil?
+          return render json: { error: "BadRequest", message: "messages is required (array of {role, content})" }, status: :bad_request
+        end
 
+        # Coerce into an array of message hashes Rails/OpenAI will accept.
+        messages =
+          Array.wrap(raw).map do |m|
+            # If the client sent a JSON string, parse it.
+            m = JSON.parse(m) rescue m
+
+            # If it's ActionController::Parameters, unfurl to a plain hash.
+            m = m.to_unsafe_h if m.respond_to?(:to_unsafe_h)
+            m = m.to_h        if m.respond_to?(:to_h) && !m.is_a?(Hash)
+
+            # Keep only role/content, as OpenAI expects
+            {
+              "role"    => m["role"] || m[:role],
+              "content" => m["content"] || m[:content]
+            }
+          end
+
+        thread_id = params[:thread_id] || "http-#{request.request_id}"
         ctx = {
           tenant_id: params[:tenant_id] || "demo-org",
           actor_id:  params[:actor_id]  || "demo-user",
@@ -39,6 +59,7 @@ module Llm
       rescue => e
         render json: { error: e.class.name, message: e.message }, status: :internal_server_error
       end
+
     end
   end
 end
