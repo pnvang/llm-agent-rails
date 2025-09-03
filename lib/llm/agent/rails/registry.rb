@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-module LLM
+module Llm
   module Agent
     module Rails
       Tool = Struct.new(:name, :version, :schema, :description, :handler, keyword_init: true)

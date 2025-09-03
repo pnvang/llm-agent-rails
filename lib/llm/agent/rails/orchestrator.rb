@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require "json"
 
-module LLM
+module Llm
   module Agent
     module Rails
       class Orchestrator

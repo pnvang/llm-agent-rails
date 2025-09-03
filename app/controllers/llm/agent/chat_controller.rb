@@ -14,16 +14,16 @@ module Llm
           thread_id: thread_id
         }
 
-        adapter = ::LLM::Agent::Rails::Adapters::OpenAIAdapter.new(
+        adapter = ::Llm::Agent::Rails::Adapters::OpenAIAdapter.new(
           api_key: ENV.fetch("OPENAI_API_KEY"),
-          model:    ::LLM::Agent::Rails.config[:model],
-          temperature: ::LLM::Agent::Rails.config[:temperature]
+          model:    ::Llm::Agent::Rails.config[:model],
+          temperature: ::Llm::Agent::Rails.config[:temperature]
         )
 
-        orch = ::LLM::Agent::Rails::Orchestrator.new(
+        orch = ::Llm::Agent::Rails::Orchestrator.new(
           adapter:  adapter,
-          registry: ::LLM::Agent::Rails.config[:registry],
-          store:    ::LLM::Agent::Rails.config[:store]
+          registry: ::Llm::Agent::Rails.config[:registry],
+          store:    ::Llm::Agent::Rails.config[:store]
         )
 
         outcome = orch.step(

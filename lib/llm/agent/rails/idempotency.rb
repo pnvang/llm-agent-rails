@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 require "securerandom"
-module LLM
+module Llm
   module Agent
     module Rails
       module Idempotency

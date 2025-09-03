@@ -3,9 +3,9 @@ require_relative "lib/llm/agent/rails/version"
 
 Gem::Specification.new do |s|
   s.name        = "llm-agent-rails"
-  s.version     = LLM::Agent::Rails::VERSION
-  s.summary     = "Rails engine for LLM-powered slot filling and tool orchestration."
-  s.description = "Drop-in Rails engine to register JSON-schema tools, let an LLM fill missing fields, validate input, and execute handlers safely."
+  s.version     = Llm::Agent::Rails::VERSION
+  s.summary     = "Rails engine for Llm-powered slot filling and tool orchestration."
+  s.description = "Drop-in Rails engine to register JSON-schema tools, let an Llm fill missing fields, validate input, and execute handlers safely."
   s.authors     = ["Phia Vang"]
   s.email       = ["pnvang@gmail.com"]
   s.homepage    = "https://github.com/pnvang/llm-agent-rails"

@@ -1,7 +1,7 @@
 # llm-agent-rails
 
-Rails engine for **LLM-powered slot filling and tool orchestration**.  
-Mount an endpoint, register tools (JSON Schema + handler), and let an LLM collect missing fields and call your Ruby code safely.
+Rails engine for **Llm-powered slot filling and tool orchestration**.  
+Mount an endpoint, register tools (JSON Schema + handler), and let an Llm collect missing fields and call your Ruby code safely.
 
 ## Install
 
@@ -54,7 +54,7 @@ module LlmTools
       schema: CREATE_TICKET_V1,
       description: "Create a support ticket.",
       handler: ->(args, ctx) {
-        key = LLM::Agent::Rails::Idempotency.generate(thread_id: ctx[:thread_id])
+        key = Llm::Agent::Rails::Idempotency.generate(thread_id: ctx[:thread_id])
         ticket = Ticket.create!(
           org_id: ctx[:tenant_id],
           user_id: ctx[:actor_id],
@@ -73,9 +73,9 @@ end
 
 Register it in `config/initializers/llm_agent.rb`:
 ```ruby
-# After LLM::Agent::Rails.configure block
+# After Llm::Agent::Rails.configure block
 require Rails.root.join("app/llm_tools/tickets")
-LlmTools.register!(LLM::Agent::Rails.config[:registry])
+LlmTools.register!(Llm::Agent::Rails.config[:registry])
 ```
 
 ## How it works
@@ -99,11 +99,11 @@ POST /llm/agent/step
 
 Edit `config/initializers/llm_agent.rb`:
 ```ruby
-LLM::Agent::Rails.configure do |c|
+Llm::Agent::Rails.configure do |c|
   c[:model]       = "gpt-4o-mini"
   c[:temperature] = 0
-  c[:store]       = LLM::Agent::Rails::Store::Memory.new
-  c[:registry]    = LLM::Agent::Rails::Registry.new
+  c[:store]       = Llm::Agent::Rails::Store::Memory.new
+  c[:registry]    = Llm::Agent::Rails::Registry.new
 end
 ```
 

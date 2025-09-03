@@ -14,7 +14,7 @@ require_relative "rails/orchestrator"
 require_relative "rails/adapters/openai_adapter"
 require_relative "rails/store/memory"
 
-module LLM
+module Llm
   module Agent
     module Rails
       class << self
@@ -22,8 +22,8 @@ module LLM
           @config ||= {
             model: "gpt-4o-mini",
             temperature: 0,
-            store: LLM::Agent::Rails::Store::Memory.new,
-            registry: LLM::Agent::Rails::Registry.new
+            store: Llm::Agent::Rails::Store::Memory.new,
+            registry: Llm::Agent::Rails::Registry.new
           }
         end
 
