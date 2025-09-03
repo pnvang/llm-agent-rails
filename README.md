@@ -22,10 +22,10 @@ Turn chat into validated function calls using JSON‑Schema, then run your Ruby 
 
 ## Install
 
-Add to your Gemfile (GitHub source until published on RubyGems):
+Add to your Gemfile:
 
 ```ruby
-gem "llm-agent-rails", github: "pnvang/llm-agent-rails", tag: "v0.1.0"
+gem "llm-agent-rails", "~> 0.1"
 ```
 
 Then:
