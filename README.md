@@ -202,7 +202,28 @@ POST /llm/intakes/:id/step
 
 `llm-fillin` is the framework-light Ruby core: workflow definitions, slot validation, confirmation, result objects, provider adapters, and idempotent handler execution.
 
-`llm-agent-rails` adds the Rails-native layer: autoloaded intake classes, ActiveRecord persistence, JSON endpoints, Rails generators, and dummy/test patterns.
+`llm-agent-rails` adds the Rails-native layer: autoloaded intake classes, ActiveRecord persistence, JSON endpoints, Rails generators, and dummy/demo app patterns.
+
+## Migration From 0.1 Agent API
+
+The old agent/tool-call route remains available as `POST /llm/step` when mounted at `/llm`, and the old `Llm::Agent::Rails` namespace still delegates to the new configuration object.
+
+For new work, move JSON-schema tools into intake classes:
+
+```ruby
+class SupportTicketIntake < LlmAgentRails::Intake
+  slot :email, type: :string, required: true, format: :email
+  slot :summary, type: :string, required: true
+
+  confirm_before_submit true
+
+  def submit(values, context:)
+    SupportTicket.create!(values.merge(created_by_id: context[:actor_id]))
+  end
+end
+```
+
+The engine persists the thread, slot state, messages, and execution result for you. Provider calls still go through `llm-fillin` adapters.
 
 ## Commands
 

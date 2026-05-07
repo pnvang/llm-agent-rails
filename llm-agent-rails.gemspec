@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
   s.homepage    = "https://github.com/pnvang/llm-agent-rails"
   s.license     = "MIT"
 
-  s.files = Dir["{app,lib,config}/**/*", "README.md", "LICENSE", "Rakefile"]
+  s.files = Dir["{app,lib,config}/**/*", "README.md", "CHANGELOG.md", "LICENSE", "Rakefile"]
   s.required_ruby_version = ">= 3.1"
 
   s.add_dependency "rails", ">= 7.0"
