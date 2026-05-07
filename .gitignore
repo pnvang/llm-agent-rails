@@ -32,6 +32,9 @@
 /config/database.yml
 /config/master.key
 /config/credentials.yml.enc
+/test/dummy/log/*
+!/test/dummy/log/.keep
+/test/dummy/tmp/*
 
 # Node / Yarn (if you add JS frontend)
 /node_modules/

@@ -34,11 +34,13 @@ module Llm
           thread_id: thread_id
         }
 
-        adapter = ::Llm::Agent::Rails::Adapters::OpenAIAdapter.new(
-          api_key: ENV.fetch("OPENAI_API_KEY"),
-          model:    ::Llm::Agent::Rails.config[:model],
-          temperature: ::Llm::Agent::Rails.config[:temperature]
-        )
+        adapter = ::Llm::Agent::Rails.config.adapter_instance
+        unless adapter.respond_to?(:step)
+          return render json: {
+            error: "BadRequest",
+            message: "The legacy /step endpoint requires an adapter that implements #step. Use /intakes/:id/step for intake workflows."
+          }, status: :bad_request
+        end
 
         orch = ::Llm::Agent::Rails::Orchestrator.new(
           adapter:  adapter,

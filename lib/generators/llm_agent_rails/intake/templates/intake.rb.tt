@@ -1,0 +1,15 @@
+# frozen_string_literal: true
+
+class <%= class_name %> < LlmAgentRails::Intake
+  description "Collect details for <%= file_name.humanize.downcase %>"
+
+<%= slot_lines.presence || "  slot :email, type: :string, required: true, format: :email" %>
+
+  confirm_before_submit true
+
+  def submit(values, context:)
+    # Replace this with application-owned Rails code, for example:
+    # BookingLead.create!(values)
+    raise NotImplementedError, "Implement #{self.class.name}#submit"
+  end
+end

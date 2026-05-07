@@ -4,19 +4,22 @@ require_relative "lib/llm/agent/rails/version"
 Gem::Specification.new do |s|
   s.name        = "llm-agent-rails"
   s.version     = Llm::Agent::Rails::VERSION
-  s.summary     = "Rails engine for Llm-powered slot filling and tool orchestration."
-  s.description = "Drop-in Rails engine to register JSON-schema tools, let an Llm fill missing fields, validate input, and execute handlers safely."
+  s.summary     = "Rails-native AI intake forms and slot-filling workflows."
+  s.description = "A Rails engine for AI-assisted intake forms that collect missing fields, validate values, confirm with users, and execute safe Rails backend actions."
   s.authors     = ["Phia Vang"]
   s.email       = ["pnvang@gmail.com"]
   s.homepage    = "https://github.com/pnvang/llm-agent-rails"
   s.license     = "MIT"
 
-  s.files = Dir["{app,lib,config}/**/*", "README.md", "LICENSE", "Rakefile"]
+  s.files = Dir["{app,lib,config}/**/*", "README.md", "CHANGELOG.md", "LICENSE", "Rakefile"]
   s.required_ruby_version = ">= 3.1"
 
   s.add_dependency "rails", ">= 7.0"
-  s.add_dependency "json_schemer", "~> 2.3"
-  s.add_dependency "openai", "~> 0.21"
+  s.add_dependency "llm-fillin", "~> 0.2"
+
+  s.add_development_dependency "minitest", "~> 5.25"
+  s.add_development_dependency "rack-test", "~> 2.2"
+  s.add_development_dependency "sqlite3", "~> 2.0"
 
   s.metadata = {
     "allowed_push_host" => "https://rubygems.org",
