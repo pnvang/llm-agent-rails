@@ -4,9 +4,7 @@ module Llm
     module Rails
       class Validators
         def self.validate!(schema, args)
-          schemer = JSONSchemer.schema(schema)
-          errors = schemer.validate(args).to_a
-          raise ArgumentError, "Schema validation failed: #{errors}" if errors.any?
+          LlmFillin::Validators.validate!(schema, args)
         end
       end
     end

@@ -1,157 +1,221 @@
 # llm-agent-rails
 
-**Rails engine for LLM‑powered agents — slot filling, tool orchestration, and safe backend execution.**  
-Turn chat into validated function calls using JSON‑Schema, then run your Ruby handlers with idempotency.
+AI intake forms for Rails.
 
----
+`llm-agent-rails` is a Rails-native layer on top of `llm-fillin` for slot-filling workflows: collect missing fields through conversation, validate before execution, confirm before submit, and run safe Rails backend actions exactly once.
 
-## What this gem gives you
+It is built for booking leads, quote requests, onboarding forms, support tickets, and internal admin workflows. It is not a broad agent framework.
 
-- A mountable endpoint: `POST /llm/agent/step` that talks to an LLM.
-- **Slot filling**: the model asks for missing fields until a tool call is ready.
-- **Tool registry**: register functions (name+version+schema+handler) the LLM can call.
-- **Validation**: arguments are validated with `json_schemer` before your handler runs.
-- **Idempotency**: unique per‑thread keys for safe “create” operations.
-- **Adapter**: OpenAI adapter using the `openai ~> 0.21` Ruby SDK.
-- **Memory store**: persists tool results per `thread_id` (swap for Redis in prod).
-- **Generators**:
-  - `rails g llm:agent:install` (initializer + mount routes)
-  - `rails g llm:agent:tickets_demo` (optional demo tool + migration)
-
----
-
-## Install
-
-Add to your Gemfile:
+## Installation
 
 ```ruby
-gem "llm-agent-rails", "~> 0.1"
+gem "llm-agent-rails"
 ```
 
 Then:
 
 ```bash
 bundle install
-bin/rails g llm:agent:install
-# mounts the engine at /llm/agent and creates config/initializers/llm_agent.rb
-```
-
-Optional demo (creates a Ticket model/tool so you can see tool-calling end‑to‑end):
-
-```bash
-bin/rails g llm:agent:tickets_demo
+bin/rails generate llm_agent_rails:install
 bin/rails db:migrate
 ```
 
-Configure your API key:
+The install generator creates:
+
+- `config/initializers/llm_agent_rails.rb`
+- `app/llm_intakes/.keep`
+- database migrations for intake threads, messages, slot values, and executions
+- a route mount example
+
+Mount the engine at `/llm`:
+
+```ruby
+mount Llm::Agent::Rails::Engine => "/llm"
+```
+
+## Create An Intake
+
+```ruby
+# app/llm_intakes/booking_lead_intake.rb
+class BookingLeadIntake < LlmAgentRails::Intake
+  description "Collect event details for a booking lead"
+
+  slot :name, type: :string, required: true
+  slot :email, type: :string, required: true, format: :email
+  slot :event_date, type: :date, required: true
+  slot :start_time, type: :string, required: true
+  slot :end_time, type: :string, required: true
+  slot :location, type: :string, required: true
+  slot :guest_count, type: :integer, required: false
+  slot :package, type: :string, enum: ["Gold", "Platinum", "Emerald"], required: false
+
+  confirm_before_submit true
+
+  def submit(values, context:)
+    BookingLead.create!(values)
+  end
+end
+```
+
+Or generate one:
 
 ```bash
-export OPENAI_API_KEY=sk-...
+bin/rails generate llm_agent_rails:intake BookingLead name:string email:string event_date:date location:string
 ```
 
-Run the app:
+## Intake Endpoint
 
-```bash
-bin/rails s
-```
+`POST /llm/intakes/:id/step`
 
----
-
-## API — talk to the agent
-
-`POST /llm/agent/step`
-
-**Body**
-```json
-{
-  "thread_id": "demo-123",
-  "messages": [
-    { "role": "user", "content": "Open a ticket for checkout failing on Apple Pay" }
-  ]
-}
-```
-
-- `thread_id` keeps tool state & idempotency consistent across turns.
-- `messages` is the chat transcript (array of `{role, content}`).
-
-**Response**
-
-One of:
-```json
-{ "type": "assistant", "text": "a clarifying question or confirmation..." }
-```
-or
-```json
-{ "type": "tool_ran", "tool_name": "create_ticket", "result": { "id": 42, "title": "..." } }
-```
-
-Errors look like:
-```json
-{ "error": "BadRequest", "message": "messages is required (array of {role, content})" }
-```
-
----
-
-## Example conversations
-
-### A. Client-managed transcript (simple)
-
-Send the **entire transcript each POST** with the same `thread_id`.
-
-```bash
-curl -X POST http://localhost:3000/llm/agent/step   -H "Content-Type: application/json"   -d '{
-    "thread_id": "demo-123",
-    "messages": [
-      { "role": "user", "content": "Open a ticket for checkout failing on Apple Pay" },
-      { "role": "assistant", "content": "I can help with that! What is the description?" },
-      { "role": "user", "content": "Description: iOS 17 checkout fails with tokenization error. Priority high." },
-      { "role": "assistant", "content": "Ill create a ticket with the following details:\n\n- **Title**: Checkout failing on Apple Pay\n- **Description**: iOS 17 checkout fails with tokenization error.\n- **Priority**: High\n\nIs there a specific category or team this ticket should be assigned to?"},
-      { "role": "user", "content": "Assign to the mobile team." }
-    ]
-  }'
-```
-
-If you **haven’t registered a tool**, you’ll receive `{"type":"assistant","text":"..."}` — a helpful structured summary.
-
-### B. With a tool registered (end‑to‑end create)
-
-1) Use the demo generator:
-
-```bash
-bin/rails g llm:agent:tickets_demo
-bin/rails db:migrate
-```
-
-This adds `app/llm_tools/tickets.rb` and registers a `create_ticket_v1` tool with JSON Schema validation and idempotency.
-
-2) Try again. Once all required fields are collected, the response includes the tool result:
+Input:
 
 ```json
 {
-  "type": "tool_ran",
-  "tool_name": "create_ticket",
-  "result": { "id": 123, "title": "Checkout failing on Apple Pay", "priority": "high", "key": "chat-demo-123-7a3c9e" }
+  "thread_id": "booking-123",
+  "message": "name: Mina Park email: mina@example.com",
+  "context": { "tenant_id": "acct_1", "actor_id": "user_1" }
 }
 ```
 
----
+Example response when fields are missing:
 
-## How it works
+```json
+{
+  "status": "needs_clarification",
+  "assistant_message": "What is the event date?",
+  "slots": {
+    "name": "Mina Park",
+    "email": "mina@example.com"
+  },
+  "missing_slots": ["event_date", "start_time", "end_time", "location"],
+  "invalid_slots": {},
+  "ready_to_confirm": false,
+  "ready_to_execute": false,
+  "executed": false,
+  "execution_result": null,
+  "idempotency_key": "intake-...",
+  "thread_id": "booking-123"
+}
+```
 
-- **Orchestrator**: supplies tools to the model, loops until enough data is collected, then chooses exactly one tool to run.
-- **Registry**: your functions (name+version+schema+handler).
-- **Validators**: rejects bad inputs before your code runs.
-- **Idempotency**: generates `chat-<thread>-<hex>`, pass to your creates.
-- **Store**: remembers prior tool results by `thread_id` (swap to Redis).
+## Confirmation Flow
 
----
+When all required slots are valid and `confirm_before_submit true` is set, the engine asks for confirmation:
 
-## Environment
+```json
+{
+  "status": "needs_confirmation",
+  "assistant_message": "Please confirm: name: Mina Park, email: mina@example.com, event date: 2026-06-20. Should I submit this?",
+  "ready_to_confirm": true,
+  "executed": false
+}
+```
 
-- `OPENAI_API_KEY` must be set.
-- Ruby ≥ 3.1, Rails ≥ 7.0.
+Confirm with the same `thread_id`:
 
----
+```bash
+curl -X POST http://localhost:3000/llm/intakes/booking_lead/step \
+  -H "Content-Type: application/json" \
+  -d '{"thread_id":"booking-123","message":"yes"}'
+```
+
+The response includes the Rails return value:
+
+```json
+{
+  "status": "executed",
+  "assistant_message": "Submitted.",
+  "executed": true,
+  "execution_result": {
+    "id": 42,
+    "name": "Mina Park"
+  },
+  "thread_id": "booking-123"
+}
+```
+
+## Idempotency
+
+Each submit has a stable idempotency key derived by `llm-fillin`. The engine stores execution records in ActiveRecord and replays completed results when a browser retries the same confirmed thread. Required slots must be valid and confirmation must pass before Rails application code runs.
+
+The generated migrations create:
+
+- `LlmAgentRails::Thread`
+- `LlmAgentRails::Message`
+- `LlmAgentRails::SlotValue`
+- `LlmAgentRails::Execution`
+
+## Provider Configuration
+
+API keys are server-side only and are never exposed to the browser.
+
+The default generated initializer uses the fake adapter:
+
+```ruby
+LlmAgentRails.configure do |config|
+  config.provider = :fake
+  config.adapter = LlmAgentRails::Adapters::Fake.new
+end
+```
+
+For OpenAI, add `gem "openai"` to your Rails app and configure through `llm-fillin`:
+
+```ruby
+LlmAgentRails.configure do |config|
+  config.provider = :openai
+  config.model = "gpt-4.1-mini"
+  config.temperature = 0
+  config.adapter = ->(c) {
+    LlmFillin::Adapters::OpenAI.new(
+      api_key: ENV.fetch("OPENAI_API_KEY"),
+      model: c.model,
+      temperature: c.temperature
+    )
+  }
+end
+```
+
+Any object that implements `#extract(workflow:, message:, slots:, context:)` can be used as an adapter.
+
+## Testing With Fake Adapter
+
+Tests should not make real API calls:
+
+```ruby
+LlmAgentRails.configure do |config|
+  config.adapter = LlmAgentRails::Adapters::Fake.new
+end
+```
+
+The fake adapter understands simple `field: value` messages, which makes request specs deterministic.
+
+## Compatibility
+
+The gem name remains `llm-agent-rails`. The old `Llm::Agent::Rails` namespace and `POST /step` endpoint are still present where reasonable for 0.1 compatibility, but the preferred API is intake-oriented:
+
+```ruby
+LlmAgentRails::Intake
+POST /llm/intakes/:id/step
+```
+
+## How This Relates To llm-fillin
+
+`llm-fillin` is the framework-light Ruby core: workflow definitions, slot validation, confirmation, result objects, provider adapters, and idempotent handler execution.
+
+`llm-agent-rails` adds the Rails-native layer: autoloaded intake classes, ActiveRecord persistence, JSON endpoints, Rails generators, and dummy/test patterns.
+
+## Commands
+
+```bash
+bundle install
+bundle exec rake test
+```
+
+Dummy app boot smoke test:
+
+```bash
+bundle exec ruby -e 'require_relative "test/dummy/config/environment"; puts Rails.application.class.name'
+```
 
 ## License
 
